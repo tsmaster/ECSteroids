@@ -1,0 +1,30 @@
+TODO
+
+- compile components
+- bootstrap system
+  look for "booted" tag component
+  if not
+    create one
+    create pools
+    init resources
+- draw linestrip
+- draw ship
+- velocity (ship)
+- draw asteroid
+- velocity (asteroid)
+- input -> steering command component
+- collision detection
+  ship vs asteroid
+- bullets
+- bullet velocity
+- draw bullets
+- limit number of bullets on screen (?)
+- limit bullet lifetime
+- bullet / asteroid collision
+- spawn new asteroids on bullet/asteroid collision
+- score increment
+- display score
+- text display
+- game state system
+- destroy entity queue
+- get new entity id

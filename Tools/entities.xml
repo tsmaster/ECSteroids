@@ -1,0 +1,33 @@
+<entities>
+  <ship>
+    <transform />
+    <polygon />
+    <playerScore />
+    <shipTag />
+    <teamId />
+    <drawColor />
+    <keyBindings />
+    <velocity />
+  </ship>
+
+  <bullet>
+    <transform />
+    <pointTag />
+    <bulletTag />
+    <teamId />
+    <drawColor />
+    <velocity />
+  </bullet>
+
+  <asteroid>
+    <transform />
+    <polygon />
+    <playerScore />
+    <shipTag />
+    <teamId />
+    <drawColor />
+    <keyBindings />
+    <velocity />
+  </asteroid>
+</entities>
+

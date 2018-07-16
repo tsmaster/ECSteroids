@@ -1,0 +1,186 @@
+ECSteroids
+
+
+Components
+----------
+Transform
+Polygon
+Player Score
+Bullet(tag)
+Asteroid(tag)
+Ship(tag)
+TeamID
+Draw Color
+AsteroidSize
+KeyBindings
+
+Velocity
+Top Speed
+Acceleration Limit
+
+Input Buffer (singleton)
+Screen Limits (singleton)
+
+FontDataObject
+CharBuffer
+
+Entity
+----------
+Player Ship
+  Transform
+  Polygon
+  Player Score
+  Ship(tag)
+  TeamID
+  DrawColor
+  Velocity
+  Top Speed
+  Acceleration Limit
+  ShipHeading
+  KeyBinding
+  InputState
+    FireRequested
+    LeftRequested
+    RightRequested
+    ThrustRequested
+
+Bullet
+  Transform
+  Bullet(tag)
+  TeamID
+  DrawColor
+  Velocity
+  Lifetime
+
+Asteroid
+  Transform
+  Polygon
+  AsteroidSize
+  Velocity
+
+
+Systems
+----------
+InputSystem (singleton)
+  reads button state from the OS, populates Input Buffer
+
+DisplaySystem (singleton)
+  gets the system display dimensions, populates Screen Limits object
+
+MovementSystem
+  foreach object with a transform and a velocity, update the transform
+
+WrapSystem (move to movement?)
+  foreach object with a transform
+    if outside screen limits, update
+
+SteerShipSystem
+  foreach object with a keybinding, and ShipHeading
+    if inputBuffer has that key
+      turn
+
+ThrottleShipSystem
+  foreach object with a keybinding and ShipHeading and Velocity
+    if inputBuffer has that key
+      increase velocity in direction of ShipHeading
+
+ClearRequestSystem
+  foreach object with InputState:
+    InputState.FireRequested = false
+
+ShootBulletSystem
+  foreach object with InputState:
+    if InputState.ShootRequested:
+      Create New Bullet
+
+AgeBulletSystem
+  foreach object with Lifetime:
+    lifetime.remaining -= dt
+    if lifetime.remaining <= 0:
+      kill this
+
+CollideAsteroidsWithShips:
+  foreach object with asteroidTag:
+    foreach object with shipTag:
+      if bounds.collide:
+        *** do death ***
+
+AISystem:
+  Foreach object with AI tag
+    foreach asteroid
+      get distance from me to it
+    foreach ship
+      if not my team
+        get distance from me to it
+    if closer than threshold
+      turn away (steering behavior, flee)
+    else
+      turn towards (steering behavior, approach)
+      if facing
+        shoot
+
+DisplayScoreSystem:
+  Clear top line of char buffer
+  Foreach object with score
+    Draw score on charbuffer (somewhere)
+
+
+
+TODO FEATURES
+----------
+UFOs
+  move vaguely on a path
+  shoot toward the player
+explosive asteroids
+  shoot bullets when broken up
+mines
+  destroy ships or asteroids that collide
+hyperspace
+pickups
+  special weapons
+    shotgun
+    homing
+    rockets (punches through asteroids)
+      with particle trails
+  shield
+high score
+attract mode
+sounds
+
+Buddy AI
+  approach other units of our team
+    flocking?
+
+Glow / decay of lines
+Thrust display
+
+
+REFERENCES
+---------
+
+Look at Unity's LineRenderer
+https://www.youtube.com/watch?v=FC3wmwlVKcs
+
+Asteroids ref:
+https://gaminghistory101.com/2012/03/19/asteroids/
+
+
+FEATURES TO DO
+----------
+maybe do the protobuf thing where components have version numbers and fields may or may not be in the current version of the component
+
+component factory that creates components by enum?
+
+component factory that creates components by string?
+
+entity factory that creates the necessary components for an entity template by string
+
+entity factory generated based on entity template
+
+base component should have an entity ID
+
+at runtime, components might be stored in type-specific directories keyed by entity ID
+  maybe these directories are stored in an even bigger directory, keyed by type ID
+  this way, I can iterate over all instances of a component, then look up a sibling of known type in O(1) time
+
+at runtime, keep track of the high water mark of used versions of each type, for diagnostic reporting and dialing in for trying to run in constant memory
