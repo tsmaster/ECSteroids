@@ -1,20 +1,11 @@
 TODO
 
-- compile components
 - bootstrap system
   look for "booted" tag component
   if not
     create one
     create pools
     init resources
-- draw linestrip
-- draw ship
-- velocity (ship)
-- draw asteroid
-- velocity (asteroid)
-- input -> steering command component
-- collision detection
-  ship vs asteroid
 - bullets
 - bullet velocity
 - draw bullets
@@ -25,6 +16,28 @@ TODO
 - score increment
 - display score
 - text display
+  - font
+  - char buffer
+  - fade
 - game state system
-- destroy entity queue
+- queue for destroyed entities
 - get new entity id
+- "action stack" game state stack
+  - boot
+  - title screen
+  - credits
+  - about (architecture)
+  - gameplay
+  - game over
+  - pause (?)
+
+DONE
+- compile components
+- draw linestrip
+- draw ship
+- velocity (ship)
+- draw asteroid
+- velocity (asteroid)
+- input -> steering command component
+- collision detection
+  ship vs asteroid
