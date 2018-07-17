@@ -105,6 +105,20 @@ CollideAsteroidsWithShips:
       if bounds.collide:
         *** do death ***
 
+UFO AI System
+  Foreach object with AI tag
+    foreach asteroid
+      determine time to collision
+      if any within threshold
+        use flee behavior
+    foreach ship
+      if not my team
+        get distance from me to it
+      if closer than threshold
+        use arrive behavior
+      if within shoot threshold
+        shoot
+
 AISystem:
   Foreach object with AI tag
     foreach asteroid
@@ -133,6 +147,10 @@ UFOs
   shoot toward the player
 explosive asteroids
   shoot bullets when broken up
+asteroids that take several shots to "mine"
+  a la sinistar
+asteroids break apart using Physics
+  conservation of momentum between bullet and asteroid before and asteroid parts after
 mines
   destroy ships or asteroids that collide
 hyperspace
@@ -142,8 +160,26 @@ pickups
     homing
     rockets (punches through asteroids)
       with particle trails
+    smartbomb
+      does damage to all enemies in range
+    chain lightning
+    orbiting buddy pod
+      like smashTV
+    stationary buddy pod
+      like R-type
+    hammer
+      like Donkey Kong
+    glaive
+      5-armed spinning boomerang, like in Krull
+    grenade
+      launch, then it explodes at a fair distance away
+    freeze
+      stops velocity of asteroids, ships
+    black hole launcher
+      launches pod that creates black hole vortex that sucks things to it
   shield
 high score
+  serialized
 attract mode
 sounds
 
@@ -153,6 +189,15 @@ Buddy AI
 
 Glow / decay of lines
 Thrust display
+
+Music
+
+Sounds
+ - thrust
+ - cannon fire
+ - bullet hit asteroid
+ - ufo arrival
+ 
 
 
 REFERENCES

@@ -14,6 +14,8 @@ public class ECSWorld : MonoBehaviour {
     public GameObject PolygonPrefab;
 
     // these pools should be somewhere else and data driven
+    // also, probably a big dictionary: componentDict, keyed by a component enum, which then has values of dictionaries keying entity ID to components.
+
     Dictionary<long, ECSteroids.Transform> cmp_transforms = new Dictionary<long, ECSteroids.Transform>();
     Dictionary<long, ECSteroids.Polygon> cmp_polygons = new Dictionary<long, ECSteroids.Polygon>();
     Dictionary<long, ECSteroids.Velocity> cmp_velocitys = new Dictionary<long, ECSteroids.Velocity>();
@@ -22,6 +24,49 @@ public class ECSWorld : MonoBehaviour {
     Dictionary<long, ECSteroids.CollisionDisk> cmp_collisionDisks = new Dictionary<long, CollisionDisk>();
     Dictionary<long, ECSteroids.ShipTag> cmp_shipTags = new Dictionary<long, ShipTag>();
     Dictionary<long, ECSteroids.AsteroidTag> cmp_asteroidTags = new Dictionary<long, AsteroidTag>();
+    Dictionary<long, ECSteroids.BulletTag> cmp_bulletTags = new Dictionary<long, BulletTag>();
+    Dictionary<long, ECSteroids.EntityLifetime> cmp_entityLifetimes = new Dictionary<long, EntityLifetime>();
+    // also add to destroy
+
+    List<long> UnusedEntityIDs = new List<long>();
+
+    List<long> destroyQueue = new List<long>();
+
+    long GetUnusedEntityID()
+    {
+        if (UnusedEntityIDs.Count > 0) {
+            long val = UnusedEntityIDs[0];
+            UnusedEntityIDs.RemoveAt(0);
+            return val;
+        }
+
+        return GetHighestUsedEntityID() + 1;
+    }
+
+    long GetHighestUsedEntityID()
+    {
+        // todo ungrossify this
+
+        long entityID = long.MinValue;
+
+        foreach (long ev in cmp_shipTags.Keys) {
+            if (ev > entityID) {
+                entityID = ev;
+            }
+        }
+        foreach (long ev in cmp_asteroidTags.Keys) {
+            if (ev > entityID) {
+                entityID = ev;
+            }
+        }
+        foreach (long ev in cmp_bulletTags.Keys) {
+            if (ev > entityID) {
+                entityID = ev;
+            }
+        }
+
+        return entityID;
+    }
 
 	// Use this for initialization
 	void Start () {
@@ -31,10 +76,9 @@ public class ECSWorld : MonoBehaviour {
         MakeShip();
 
         int asteroidCount = 18;
-        long entityID = 1;
 
         for (int i = 0; i < asteroidCount; ++i) {
-            MakeAsteroid(entityID++);
+            MakeInitialAsteroid();
         }
 
         MakeSingletons();
@@ -84,9 +128,8 @@ public class ECSWorld : MonoBehaviour {
         cmp_shipTags[firstEntityID] = tag;
     }
 
-    void MakeAsteroid(long entityID)
+    void MakeInitialAsteroid()
     {
-        ECSteroids.Transform firstTransform = new ECSteroids.Transform();
         float angle = Random.Range(0.0f, Mathf.PI * 2.0f);
         float x = Mathf.Cos(angle);
         float y = Mathf.Sin(angle);
@@ -95,15 +138,32 @@ public class ECSWorld : MonoBehaviour {
         float maxRad = 21.0f;
         float startRad = Random.Range(minRad, maxRad);
 
-        firstTransform.pos = new Vector3(x * startRad, y * startRad, 0.0f);
+        Vector3 pos = new Vector3(x * startRad, y * startRad, 0.0f);
+
+        float asteroidRadius = 2.5f;
+
+        float firstSpeed = Random.Range(1.0f, 3.0f);
+
+        float vAng = Random.Range(0, Mathf.PI * 2);
+        Vector3 vel = new Vector3(Mathf.Cos(vAng) * firstSpeed, Mathf.Sin(vAng) * firstSpeed, 0.0f);
+
+        MakeAsteroid(pos, asteroidRadius, vel);
+    }
+
+    void MakeAsteroid(Vector3 pos, float radius, Vector3 vel)
+    {
+        long entityID = GetUnusedEntityID();
+
+        ECSteroids.Transform firstTransform = new ECSteroids.Transform();
+
+        firstTransform.pos = pos;
         firstTransform.angle = 0.0f;
         firstTransform.EntityID = entityID;
 
         ECSteroids.Polygon firstPolygon = new Polygon();
         firstPolygon.points = new List<Vector3>();
 
-        float asteroidRadius = 1.5f;
-        float variance = 0.4f;
+        float variance = radius * 0.3f;
         int points = 12;
 
         for (int i = 0; i < points; ++i) {
@@ -111,7 +171,7 @@ public class ECSWorld : MonoBehaviour {
             float ast_x = Mathf.Cos(ast_angle);
             float ast_y = Mathf.Sin(ast_angle);
 
-            float r = Random.Range(asteroidRadius - variance, asteroidRadius + variance);
+            float r = Random.Range(radius - variance, radius + variance);
 
             firstPolygon.points.Add(new Vector3(ast_x * r, ast_y * r));
         }
@@ -121,14 +181,11 @@ public class ECSWorld : MonoBehaviour {
         firstPolygon.EntityID = entityID;
 
         ECSteroids.Velocity firstVelocity = new Velocity();
-        float firstSpeed = Random.Range(1.0f, 3.0f);
-
-        float vAng = Random.Range(0, Mathf.PI * 2);
-        firstVelocity.vel = new Vector3(Mathf.Cos(vAng) * firstSpeed, Mathf.Sin(vAng) * firstSpeed, 0.0f);
+        firstVelocity.vel = vel;
         firstVelocity.EntityID = entityID;
 
         CollisionDisk disk = new CollisionDisk();
-        disk.radius = asteroidRadius;
+        disk.radius = radius;
         disk.EntityID = entityID;
 
         AsteroidTag asteroidTag = new AsteroidTag();
@@ -141,11 +198,62 @@ public class ECSWorld : MonoBehaviour {
         cmp_asteroidTags[entityID] = asteroidTag;
     }
 
+    void MakeBullet(Vector3 pos, Vector3 velocity, float lifetime)
+    {
+        long entityID = GetUnusedEntityID();
+
+        ECSteroids.Transform firstTransform = new ECSteroids.Transform();
+        firstTransform.pos = pos;
+        firstTransform.angle = 0.0f;
+        firstTransform.EntityID = entityID;
+
+        ECSteroids.Polygon firstPolygon = new Polygon();
+        firstPolygon.points = new List<Vector3>();
+
+        float bulletSize = 0.15f;
+        int points = 6;
+
+        for (int i = 0; i < points; ++i) {
+            float bullet_angle = MapRange(i, 0, points, 0, Mathf.PI * 2);
+            float bullet_x = Mathf.Cos(bullet_angle);
+            float bullet_y = Mathf.Sin(bullet_angle);
+
+            firstPolygon.points.Add(new Vector3(bullet_x * bulletSize, bullet_y * bulletSize));
+        }
+
+        firstPolygon.isClosed = true;
+        firstPolygon.unityObject = GameObject.Instantiate(PolygonPrefab);
+        firstPolygon.EntityID = entityID;
+
+        ECSteroids.Velocity firstVelocity = new Velocity();
+        firstVelocity.vel = velocity;
+        firstVelocity.EntityID = entityID;
+
+        CollisionDisk disk = new CollisionDisk();
+        disk.radius = bulletSize * 2; // cheat it a little larger
+        disk.EntityID = entityID;
+
+        BulletTag bulletTag = new BulletTag();
+        bulletTag.EntityID = entityID;
+
+        EntityLifetime entityLifetime = new EntityLifetime();
+        entityLifetime.EntityID = entityID;
+        entityLifetime.secondsRemaining = lifetime;
+
+        cmp_transforms[entityID] = firstTransform;
+        cmp_polygons[entityID] = firstPolygon;
+        cmp_velocitys[entityID] = firstVelocity;
+        cmp_collisionDisks[entityID] = disk;
+        cmp_bulletTags[entityID] = bulletTag;
+        cmp_entityLifetimes[entityID] = entityLifetime;
+    }
+
     void MakeSingletons()
     {
         long NO_ENTITY = -1;
         ECSteroids.InputBuffer inputBuffer = new InputBuffer();
         inputBuffer.Reset();
+        inputBuffer.maxCooldown = 0.25f;
         cmp_inputBuffers[NO_ENTITY] = inputBuffer;
     }
 
@@ -163,6 +271,9 @@ public class ECSWorld : MonoBehaviour {
         PhysicsSystemTick();
         CollisionDetectionSystemTick();
         PolygonSystemTick();
+        LifetimeSystemTick();
+
+        DestroyQueuedEntities();
 
         DebugTick();
 	}
@@ -200,15 +311,31 @@ public class ECSWorld : MonoBehaviour {
         }
     }
 
+    Vector3 vectorFromAngleMagnitude(float angle, float magnitude)
+    {
+        float x = Mathf.Cos(angle);
+        float y = Mathf.Sin(angle);
+        return new Vector3(x * magnitude, y * magnitude, 0.0f);
+    }
+
     void ApplyInputSystemTick()
     {
         // TODO support data-driven key bindings
 
         // TODO make this data driven somewhere
-        const float STEER_RATE = -90.0f;
+        const float STEER_RATE = -Mathf.PI/2.0f;
         const float THRUST_RATE = 0.1f;
+        // TODO move to a component
+        float BULLET_SPEED = 10.0f;
+        float BULLET_LIFETIME = 2.8f;
+        int MAX_BULLET_COUNT = 6;
+
+        int curBulletCount = cmp_bulletTags.Count;
 
         InputBuffer ib = cmp_inputBuffers[-1];
+
+
+
         foreach (InputDrivesThisEntityTempTag iTag in cmp_inputTags.Values) {
             long entity = iTag.EntityID;
             ECSteroids.Transform t = cmp_transforms[entity];
@@ -217,10 +344,20 @@ public class ECSWorld : MonoBehaviour {
             t.angle += ib.steer * Time.deltaTime * STEER_RATE;
 
             if (ib.throttle > 0.0f) {
-                float angleRad = t.angle * Mathf.PI / 180.0f;
-                float cx = Mathf.Cos(angleRad);
-                float cy = Mathf.Sin(angleRad);
+                float cx = Mathf.Cos(t.angle);
+                float cy = Mathf.Sin(t.angle);
                 v.vel += new Vector3(cx * THRUST_RATE, cy * THRUST_RATE, 0.0f);
+            }
+
+            if (ib.shootCooldown > 0.0f) {
+                ib.shootCooldown -= Time.deltaTime;
+            }
+
+            if (ib.isShooting && (curBulletCount < MAX_BULLET_COUNT) && (ib.shootCooldown <= 0.0f)) {
+                ib.shootCooldown = ib.maxCooldown;
+
+                Vector3 bulletVec = vectorFromAngleMagnitude(t.angle, BULLET_SPEED);
+                MakeBullet(t.pos, bulletVec, BULLET_LIFETIME);
             }
         }
     }
@@ -276,10 +413,67 @@ public class ECSWorld : MonoBehaviour {
                 float threshSqr = thresh * thresh;
 
                 if ((asteroidTransform.pos - shipTransform.pos).sqrMagnitude < threshSqr) {
-                    Debug.Log(System.String.Format("found collision between {0} and {1}", shipEntity, asteroidEntity));
+                    //Debug.Log(System.String.Format("found collision between {0} and {1}", shipEntity, asteroidEntity));
                 }
             }
         }
+
+        List<KeyValuePair<long, long>> collisions = new List<KeyValuePair<long, long>>();
+
+        foreach (BulletTag bt in cmp_bulletTags.Values) {
+            long bulletEntity = bt.EntityID;
+            CollisionDisk bulletDisk = cmp_collisionDisks[bulletEntity];
+            ECSteroids.Transform bulletTransform = cmp_transforms[bulletEntity];
+
+            foreach (AsteroidTag at in cmp_asteroidTags.Values) {
+                long asteroidEntity = at.EntityID;
+                CollisionDisk asteroidDisk = cmp_collisionDisks[asteroidEntity];
+                ECSteroids.Transform asteroidTransform = cmp_transforms[asteroidEntity];
+
+                float thresh = asteroidDisk.radius + bulletDisk.radius;
+                float threshSqr = thresh * thresh;
+
+                if ((asteroidTransform.pos - bulletTransform.pos).sqrMagnitude < threshSqr) {
+                    collisions.Add(new KeyValuePair<long, long>(bulletEntity, asteroidEntity));
+                }
+            }
+        }
+
+        foreach (KeyValuePair<long, long> kvp in collisions) {
+            collideBulletWithAsteroid(kvp.Key, kvp.Value);
+        }
+    }
+
+    void collideBulletWithAsteroid(long bulletEntity, long asteroidEntity)
+    {
+        // TODO move into a component
+        const float MIN_RADIUS = 1.2f;
+
+        CollisionDisk acd = cmp_collisionDisks[asteroidEntity];
+        float oldSize = acd.radius;
+
+        if (oldSize > MIN_RADIUS) {
+            ECSteroids.Transform at = cmp_transforms[asteroidEntity];
+            ECSteroids.Velocity av = cmp_velocitys[asteroidEntity];
+            ECSteroids.Velocity bv = cmp_velocitys[bulletEntity];
+
+            // break asteroid up, if it's big enough
+
+            float frac = Random.Range(0.3f, 0.5f);
+
+            float newRadius1 = oldSize * frac;
+            float newRadius2 = oldSize * (1.0f - frac);
+
+            const float BULLET_DISCOUNT = 0.35f;
+
+            Vector3 newVelocity1 = av.vel + bv.vel * (1.0f - frac) * BULLET_DISCOUNT;
+            Vector3 newVelocity2 = av.vel + bv.vel * frac * BULLET_DISCOUNT;
+
+            MakeAsteroid(at.pos, newRadius1, newVelocity1);
+            MakeAsteroid(at.pos, newRadius2, newVelocity2);
+        }
+        flagEntityForDestruction(asteroidEntity);
+        flagEntityForDestruction(bulletEntity);
     }
 
     void PolygonSystemTick()
@@ -288,7 +482,8 @@ public class ECSWorld : MonoBehaviour {
 
         foreach (Polygon p in cmp_polygons.Values) {
             ECSteroids.Transform t = cmp_transforms[p.EntityID];
-            p.unityObject.transform.SetPositionAndRotation(t.pos, Quaternion.AngleAxis(t.angle, zAxis));
+            float angleDeg = t.angle * 180 / Mathf.PI;
+            p.unityObject.transform.SetPositionAndRotation(t.pos, Quaternion.AngleAxis(angleDeg, zAxis));
 
             LineRenderer lRend = p.unityObject.GetComponent<LineRenderer>();
             lRend.positionCount = p.points.Count;
@@ -303,5 +498,48 @@ public class ECSWorld : MonoBehaviour {
             lRend.widthCurve = curve;
             lRend.widthMultiplier = constWidth;
         }
+    }
+
+    void LifetimeSystemTick()
+    {
+        foreach (EntityLifetime el in cmp_entityLifetimes.Values) {
+            el.secondsRemaining -= Time.deltaTime;
+            //Debug.Log("seconds remaining:" + el.secondsRemaining);
+            if (el.secondsRemaining <= 0.0f) {
+                //Debug.Log("flagging");
+                flagEntityForDestruction(el.EntityID);
+            }
+        }
+    }
+
+    void flagEntityForDestruction(long entityID)
+    {
+        destroyQueue.Add(entityID);
+    }
+
+    void DestroyQueuedEntities()
+    {
+        foreach (long entityId in destroyQueue) {
+            Debug.Log("removing " + entityId);
+            // TODO make this cleaner
+            cmp_transforms.Remove(entityId);
+            if (cmp_polygons.ContainsKey(entityId))
+            {
+                // so gross!
+                Destroy(cmp_polygons[entityId].unityObject);
+                cmp_polygons.Remove(entityId);
+            }
+            cmp_velocitys.Remove(entityId);
+            cmp_inputBuffers.Remove(entityId);
+            cmp_inputTags.Remove(entityId);
+            cmp_collisionDisks.Remove(entityId);
+            cmp_shipTags.Remove(entityId);
+            cmp_asteroidTags.Remove(entityId);
+            cmp_bulletTags.Remove(entityId);
+            cmp_entityLifetimes.Remove(entityId);
+
+            UnusedEntityIDs.Add(entityId);
+        }
+        destroyQueue.Clear();
     }
 }

@@ -236,12 +236,16 @@ namespace ECSteroids {
         public float steer;
         public float throttle;
         public bool isShooting;
+        public float shootCooldown;
+        public float maxCooldown;
 
-        public void Populate(List<KeyState> keys, float steer, float throttle, bool isShooting) {
+        public void Populate(List<KeyState> keys, float steer, float throttle, bool isShooting, float shootCooldown, float maxCooldown) {
             this.keys = keys;
             this.steer = steer;
             this.throttle = throttle;
             this.isShooting = isShooting;
+            this.shootCooldown = shootCooldown;
+            this.maxCooldown = maxCooldown;
         }
 
         public override String Serialize() {
@@ -318,6 +322,26 @@ namespace ECSteroids {
 
         public void Populate(float radius) {
             this.radius = radius;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class EntityLifetime : BaseComponent {
+        public float secondsRemaining;
+
+        public void Populate(float secondsRemaining) {
+            this.secondsRemaining = secondsRemaining;
         }
 
         public override String Serialize() {

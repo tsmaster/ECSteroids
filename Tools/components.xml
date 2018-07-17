@@ -34,6 +34,8 @@
     <steer type="float" />
     <throttle type="float" />
     <isShooting type="bool" />
+    <shootCooldown type="float" />
+    <maxCooldown type="float" />
   </inputBuffer>
   <screenLimits>
     <width type="float" />
@@ -43,5 +45,8 @@
   <collisionDisk>
     <radius type="float" />
   </collisionDisk>
+  <entityLifetime>
+    <secondsRemaining type="float" />
+  </entityLifetime>
   
 </components>
