@@ -1,0 +1,49 @@
+<components>
+  <transform>
+    <pos type="Vector3" />
+    <angle type="float" />
+  </transform>
+  <polygon>
+    <isClosed type="bool" />
+    <points type="List{Vector3}" />
+    <unityObject type="GameObject" />
+  </polygon>
+  <playerScore>
+    <score type="int" />
+  </playerScore>
+  <bulletTag />
+  <shipTag />
+  <asteroidTag />
+  <teamId>
+    <index type="int" />
+  </teamId>
+  <drawColor>
+    <color type="Color"/>
+  </drawColor>
+  <asteroidSize>
+    <radius type="float"/>
+  </asteroidSize>
+  <keyBindings>
+    <keys type="List{KeyBinding}" />
+  </keyBindings>
+  <velocity>
+    <vel type="Vector3" />
+  </velocity>
+  <inputBuffer>
+    <keys type="List{KeyState}" />
+    <steer type="float" />
+    <throttle type="float" />
+    <isShooting type="bool" />
+    <shootCooldown type="float" />
+    <maxShootCooldown type="float" />
+  </inputBuffer>
+  <screenLimits>
+    <width type="float" />
+  </screenLimits>
+  <pointTag/>
+  <inputDrivesThisEntityTempTag/>
+  <collisionDisk>
+    <radius type="float" />
+  </collisionDisk>
+  
+</components>
