@@ -67,6 +67,7 @@ using System.Collections.Generic;
 using String = System.String;
 using Unity.Collections;
 using UnityEngine;
+using Vectrosity;
 
 namespace ECSteroids {{
 """.format(sourceFilename)

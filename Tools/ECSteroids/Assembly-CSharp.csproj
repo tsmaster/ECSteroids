@@ -58,6 +58,10 @@
      <Compile Include="Assets\Scripts\Generated\gen_components.cs" />
      <Compile Include="Assets\Scripts\Systems\BDGECSBaseSystem.cs" />
      <Compile Include="Assets\Scripts\Systems\InputSystem.cs" />
+     <Compile Include="Assets\Scripts\VectrosityPolygon.cs" />
+     <None Include="Assets\Vectrosity\Vectrosity Documentation\Vectrosity5 Upgrade Guide.txt" />
+     <None Include="Assets\Vectrosity\What to import!.txt" />
+     <None Include="Assets\Vectrosity\Vectrosity Documentation\Vectrosity changelog.txt" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>/home/tsmaster/Dropbox/Dev/ECSteroids/Tools/ECSteroids/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>
@@ -273,6 +277,9 @@
  </Reference>
  <Reference Include="UnityEngine.StandardEvents">
  <HintPath>/home/tsmaster/.config/unity3d/cache/packages/packages.unity.com/com.unity.standardevents@1.0.13/UnityEngine.StandardEvents.dll</HintPath>
+ </Reference>
+ <Reference Include="Vectrosity">
+ <HintPath>/home/tsmaster/Dropbox/Dev/ECSteroids/Tools/ECSteroids/Assets/Vectrosity/Plugins/Vectrosity.dll</HintPath>
  </Reference>
  <Reference Include="mscorlib">
  <HintPath>/home/tsmaster/Unity-2018.2.0f2/Editor/Data/MonoBleedingEdge/lib/mono/unity/mscorlib.dll</HintPath>

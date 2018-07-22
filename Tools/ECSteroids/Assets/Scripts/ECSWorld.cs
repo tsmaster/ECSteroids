@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Vectrosity;
 
 using BDG_ECS;
 using ECSteroids;
@@ -31,6 +32,8 @@ public class ECSWorld : MonoBehaviour {
     List<long> UnusedEntityIDs = new List<long>();
 
     List<long> destroyQueue = new List<long>();
+
+    VectorLine myTextVectorLine;
 
     long GetUnusedEntityID()
     {
@@ -75,13 +78,20 @@ public class ECSWorld : MonoBehaviour {
 
         MakeShip();
 
-        int asteroidCount = 18;
+        int asteroidCount = 3;
 
         for (int i = 0; i < asteroidCount; ++i) {
             MakeInitialAsteroid();
         }
 
         MakeSingletons();
+            
+        List<Vector3> textPoints = new List<Vector3>();
+        textPoints.Add(new Vector3(0, 0, 0));
+        textPoints.Add(new Vector3(10, 10, 0));
+        myTextVectorLine = new VectorLine("textVectorLine", textPoints, 1.0f);
+        myTextVectorLine.color = new Color(0, 0.8f, 0);
+        myTextVectorLine.MakeText("Hello, ECS-teroids", new Vector3(0.0f, 20.0f, 0.0f), 1.0f);
 	}
 
     void MakeShip()
@@ -100,9 +110,11 @@ public class ECSWorld : MonoBehaviour {
         firstPolygon.points.Add(new Vector3(-1.0f, 1.0f));
         firstPolygon.points.Add(new Vector3(-.5f, 0.0f));
         firstPolygon.points.Add(new Vector3(-1.0f, -1.0f));
+        firstPolygon.points.Add(new Vector3(2.0f, 0.0f));
 
-        firstPolygon.isClosed = true;
-        firstPolygon.unityObject = GameObject.Instantiate(PolygonPrefab);
+        firstPolygon.color = Color.green;
+        firstPolygon.lineWidth = 2.0f;
+        firstPolygon.isDirty = true;
         firstPolygon.EntityID = firstEntityID;
 
         ECSteroids.Velocity firstVelocity = new Velocity();
@@ -175,9 +187,12 @@ public class ECSWorld : MonoBehaviour {
 
             firstPolygon.points.Add(new Vector3(ast_x * r, ast_y * r));
         }
+        // close it off
+        firstPolygon.points.Add(firstPolygon.points[0]);
 
-        firstPolygon.isClosed = true;
-        firstPolygon.unityObject = GameObject.Instantiate(PolygonPrefab);
+        firstPolygon.color = Color.green;
+        firstPolygon.lineWidth = 1.5f;
+        firstPolygon.isDirty = true;
         firstPolygon.EntityID = entityID;
 
         ECSteroids.Velocity firstVelocity = new Velocity();
@@ -220,9 +235,11 @@ public class ECSWorld : MonoBehaviour {
 
             firstPolygon.points.Add(new Vector3(bullet_x * bulletSize, bullet_y * bulletSize));
         }
+        firstPolygon.points.Add(firstPolygon.points[0]);
 
-        firstPolygon.isClosed = true;
-        firstPolygon.unityObject = GameObject.Instantiate(PolygonPrefab);
+        firstPolygon.color = Color.green;
+        firstPolygon.lineWidth = 2.0f;
+        firstPolygon.isDirty = true;
         firstPolygon.EntityID = entityID;
 
         ECSteroids.Velocity firstVelocity = new Velocity();
@@ -266,6 +283,7 @@ public class ECSWorld : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         // foreach system, system.Tick();
+
         ReadInputSystemTick();
         ApplyInputSystemTick();
         PhysicsSystemTick();
@@ -276,6 +294,8 @@ public class ECSWorld : MonoBehaviour {
         DestroyQueuedEntities();
 
         DebugTick();
+
+        myTextVectorLine.Draw();
 	}
 
     void DebugTick()
@@ -479,24 +499,23 @@ public class ECSWorld : MonoBehaviour {
     void PolygonSystemTick()
     {
         Vector3 zAxis = new Vector3(0.0f, 0.0f, 1.0f);
+        Vector3 identityScale = new Vector3(1.0f, 1.0f, 1.0f);
 
         foreach (Polygon p in cmp_polygons.Values) {
             ECSteroids.Transform t = cmp_transforms[p.EntityID];
             float angleDeg = t.angle * 180 / Mathf.PI;
-            p.unityObject.transform.SetPositionAndRotation(t.pos, Quaternion.AngleAxis(angleDeg, zAxis));
 
-            LineRenderer lRend = p.unityObject.GetComponent<LineRenderer>();
-            lRend.positionCount = p.points.Count;
-            lRend.SetPositions(p.points.ToArray());
+            if (p.isDirty) {
+                p.vectLine = new VectorLine("polygon eid:" + p.EntityID, p.points, 2.0f);
+                p.vectLine.lineType = LineType.Continuous;
+                p.vectLine.color = p.color;
+                p.isDirty = false;
+            }
 
-            float constWidth = 0.1f;
-            lRend.startWidth = lRend.endWidth = constWidth;
+            Matrix4x4 tMat = Matrix4x4.TRS(t.pos, Quaternion.AngleAxis(angleDeg, zAxis), identityScale);
+            p.vectLine.matrix = tMat;
 
-            AnimationCurve curve = new AnimationCurve();
-            curve.AddKey(0.0f, 1.0f);
-            curve.AddKey(1.0f, 1.0f);
-            lRend.widthCurve = curve;
-            lRend.widthMultiplier = constWidth;
+            p.vectLine.Draw();
         }
     }
 
@@ -526,7 +545,8 @@ public class ECSWorld : MonoBehaviour {
             if (cmp_polygons.ContainsKey(entityId))
             {
                 // so gross!
-                Destroy(cmp_polygons[entityId].unityObject);
+                //Destroy(cmp_polygons[entityId].unityObject);
+                VectorLine.Destroy(ref cmp_polygons[entityId].vectLine);
                 cmp_polygons.Remove(entityId);
             }
             cmp_velocitys.Remove(entityId);

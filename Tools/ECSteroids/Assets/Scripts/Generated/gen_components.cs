@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using String = System.String;
 using Unity.Collections;
 using UnityEngine;
+using Vectrosity;
 
 namespace ECSteroids {
     public class Transform : BaseComponent {
@@ -34,14 +35,18 @@ namespace ECSteroids {
     }
 
     public class Polygon : BaseComponent {
-        public bool isClosed;
         public List<Vector3> points;
-        public GameObject unityObject;
+        public VectorLine vectLine;
+        public bool isDirty;
+        public Color color;
+        public float lineWidth;
 
-        public void Populate(bool isClosed, List<Vector3> points, GameObject unityObject) {
-            this.isClosed = isClosed;
+        public void Populate(List<Vector3> points, VectorLine vectLine, bool isDirty, Color color, float lineWidth) {
             this.points = points;
-            this.unityObject = unityObject;
+            this.vectLine = vectLine;
+            this.isDirty = isDirty;
+            this.color = color;
+            this.lineWidth = lineWidth;
         }
 
         public override String Serialize() {

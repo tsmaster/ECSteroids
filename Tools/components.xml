@@ -4,9 +4,11 @@
     <angle type="float" />
   </transform>
   <polygon>
-    <isClosed type="bool" />
     <points type="List{Vector3}" />
-    <unityObject type="GameObject" />
+    <vectLine type="VectorLine" />
+    <isDirty type="bool" />
+    <color type="Color" />
+    <lineWidth type="float" />
   </polygon>
   <playerScore>
     <score type="int" />

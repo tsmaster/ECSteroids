@@ -142,6 +142,9 @@ DisplayScoreSystem:
 
 TODO FEATURES
 ----------
+Key binding
+  particularly, space should shoot
+  also, ctrl should shoot
 UFOs
   move vaguely on a path
   shoot toward the player
