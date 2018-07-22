@@ -362,5 +362,27 @@ namespace ECSteroids {
 
     }
 
+    public class PlayerData : BaseComponent {
+        public int score;
+        public int lives;
+
+        public void Populate(int score, int lives) {
+            this.score = score;
+            this.lives = lives;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
 }
 

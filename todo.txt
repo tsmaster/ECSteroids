@@ -6,13 +6,6 @@ TODO
     create one
     create pools
     init resources
-- bullets
-- bullet velocity
-- draw bullets
-- limit number of bullets on screen (?)
-- limit bullet lifetime
-- bullet / asteroid collision
-- spawn new asteroids on bullet/asteroid collision
 - score increment
 - display score
 - text display
@@ -20,8 +13,6 @@ TODO
   - char buffer
   - fade
 - game state system
-- queue for destroyed entities
-- get new entity id
 - "action stack" game state stack
   - boot
   - title screen
@@ -41,3 +32,12 @@ DONE
 - input -> steering command component
 - collision detection
   ship vs asteroid
+- bullets
+- bullet velocity
+- draw bullets
+- limit number of bullets on screen (?)
+- limit bullet lifetime
+- bullet / asteroid collision
+- spawn new asteroids on bullet/asteroid collision
+- queue for destroyed entities
+- get new entity id

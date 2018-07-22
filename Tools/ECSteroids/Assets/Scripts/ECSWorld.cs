@@ -27,6 +27,7 @@ public class ECSWorld : MonoBehaviour {
     Dictionary<long, ECSteroids.AsteroidTag> cmp_asteroidTags = new Dictionary<long, AsteroidTag>();
     Dictionary<long, ECSteroids.BulletTag> cmp_bulletTags = new Dictionary<long, BulletTag>();
     Dictionary<long, ECSteroids.EntityLifetime> cmp_entityLifetimes = new Dictionary<long, EntityLifetime>();
+    Dictionary<long, ECSteroids.PlayerData> cmp_playerDatas = new Dictionary<long, PlayerData>();
     // also add to destroy
 
     List<long> UnusedEntityIDs = new List<long>();
@@ -132,12 +133,18 @@ public class ECSWorld : MonoBehaviour {
         ShipTag tag = new ShipTag();
         tag.EntityID = firstEntityID;
 
+        PlayerData playerData = new PlayerData();
+        playerData.score = 0;
+        playerData.lives = 3;
+        playerData.EntityID = firstEntityID;
+
         cmp_transforms[firstEntityID] = firstTransform;
         cmp_polygons[firstEntityID] = firstPolygon;
         cmp_velocitys[firstEntityID] = firstVelocity;
         cmp_inputTags[firstEntityID] = inputTag;
         cmp_collisionDisks[firstEntityID] = disk;
         cmp_shipTags[firstEntityID] = tag;
+        cmp_playerDatas[firstEntityID] = playerData;
     }
 
     void MakeInitialAsteroid()
@@ -290,12 +297,11 @@ public class ECSWorld : MonoBehaviour {
         CollisionDetectionSystemTick();
         PolygonSystemTick();
         LifetimeSystemTick();
+        DrawScoreSystemTick();
 
         DestroyQueuedEntities();
 
         DebugTick();
-
-        myTextVectorLine.Draw();
 	}
 
     void DebugTick()
@@ -464,8 +470,18 @@ public class ECSWorld : MonoBehaviour {
         }
     }
 
+    void addScore(int points)
+    {
+        // TODO only give points to the actual owner
+        foreach (PlayerData pd in cmp_playerDatas.Values) {
+            pd.score += points;
+        }
+    }
+
     void collideBulletWithAsteroid(long bulletEntity, long asteroidEntity)
     {
+        addScore(100);
+
         // TODO move into a component
         const float MIN_RADIUS = 1.2f;
 
@@ -531,6 +547,15 @@ public class ECSWorld : MonoBehaviour {
         }
     }
 
+    void DrawScoreSystemTick()
+    {
+        foreach (PlayerData pd in cmp_playerDatas.Values) {
+            string scoreString = string.Format("Score: {0} Ships: {1}", pd.score, pd.lives);
+            myTextVectorLine.MakeText(scoreString, new Vector3(0.0f, 20.0f, 0.0f), 1.0f);
+            myTextVectorLine.Draw();
+        }
+    }
+
     void flagEntityForDestruction(long entityID)
     {
         destroyQueue.Add(entityID);
@@ -557,6 +582,7 @@ public class ECSWorld : MonoBehaviour {
             cmp_asteroidTags.Remove(entityId);
             cmp_bulletTags.Remove(entityId);
             cmp_entityLifetimes.Remove(entityId);
+            cmp_playerDatas.Remove(entityId);
 
             UnusedEntityIDs.Add(entityId);
         }
