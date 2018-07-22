@@ -10,16 +10,26 @@ TODO
   - font
   - char buffer
   - fade
-- game state system
-- "action stack" game state stack
-  - boot
-  - title screen
+- game state modes
   - credits
   - about (architecture)
-  - gameplay
-  - game over
+  - backstory
   - pause (?)
+  - attract
 - high score persist
+- exploding ship
+- respawn at (0, 0)
+- redo state tags with enum value (vs tag)
+- ship thrust
+- pickups
+  - shield
+  - hyperspace
+  - weapons
+    - rockets
+    - homing missiles
+    - chain lightning
+    - smartbomb
+    - mines
 
 DONE
 - compile components
@@ -42,3 +52,9 @@ DONE
 - get new entity id
 - score increment
 - display score
+- game state system
+  - boot
+  - title screen
+  - gameplay
+  - game over
+- spawn

@@ -55,6 +55,13 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\BaseComponent.cs" />
      <Compile Include="Assets\Scripts\ECSWorld.cs" />
+     <Compile Include="Assets\Scripts\GameStates\AboutState.cs" />
+     <Compile Include="Assets\Scripts\GameStates\BackStoryState.cs" />
+     <Compile Include="Assets\Scripts\GameStates\BootState.cs" />
+     <Compile Include="Assets\Scripts\GameStates\CreditsState.cs" />
+     <Compile Include="Assets\Scripts\GameStates\GameOverState.cs" />
+     <Compile Include="Assets\Scripts\GameStates\GamePlayState.cs" />
+     <Compile Include="Assets\Scripts\GameStates\TitleState.cs" />
      <Compile Include="Assets\Scripts\Generated\gen_components.cs" />
      <Compile Include="Assets\Scripts\Systems\BDGECSBaseSystem.cs" />
      <Compile Include="Assets\Scripts\Systems\InputSystem.cs" />

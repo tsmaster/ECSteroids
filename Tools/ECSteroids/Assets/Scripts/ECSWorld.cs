@@ -12,7 +12,18 @@ using ECSteroids;
 /// This is the Unity top level behavior that holds everything, runs our systems.
 /// </summary>
 public class ECSWorld : MonoBehaviour {
-    public GameObject PolygonPrefab;
+    public long NO_ENTITY = -1;
+
+    public enum ECSteroidsGameState {
+        NONE,
+        Boot,
+        Title,
+        Credits,
+        About,
+        Backstory,
+        Gameplay,
+        GameOver,
+    };
 
     // these pools should be somewhere else and data driven
     // also, probably a big dictionary: componentDict, keyed by a component enum, which then has values of dictionaries keying entity ID to components.
@@ -28,6 +39,13 @@ public class ECSWorld : MonoBehaviour {
     Dictionary<long, ECSteroids.BulletTag> cmp_bulletTags = new Dictionary<long, BulletTag>();
     Dictionary<long, ECSteroids.EntityLifetime> cmp_entityLifetimes = new Dictionary<long, EntityLifetime>();
     Dictionary<long, ECSteroids.PlayerData> cmp_playerDatas = new Dictionary<long, PlayerData>();
+    Dictionary<long, ECSteroids.GameState> cmp_gameStates = new Dictionary<long, GameState>();
+    Dictionary<long, ECSteroids.PendingGameState> cmp_pendingGameStates = new Dictionary<long, PendingGameState>();
+    Dictionary<long, ECSteroids.TextMessage> cmp_textMessages = new Dictionary<long, TextMessage>();
+    public Dictionary<long, ECSteroids.BootStateTag> cmp_bootStateTags = new Dictionary<long, BootStateTag>();
+    public Dictionary<long, ECSteroids.TitleStateTag> cmp_titleStateTags = new Dictionary<long, TitleStateTag>();
+    public Dictionary<long, ECSteroids.GameplayStateTag> cmp_gameplayStateTags = new Dictionary<long, GameplayStateTag>();
+    Dictionary<long, ECSteroids.TemporaryInvulnerability> cmp_temporaryInvulnerabilitys = new Dictionary<long, TemporaryInvulnerability>();
     // also add to destroy
 
     List<long> UnusedEntityIDs = new List<long>();
@@ -35,6 +53,111 @@ public class ECSWorld : MonoBehaviour {
     List<long> destroyQueue = new List<long>();
 
     VectorLine myTextVectorLine;
+
+    ECSteroidsGameState GetGameState()
+    {
+        foreach (GameState gameState in cmp_gameStates.Values) {
+            return gameState.currentState;
+        }
+
+        return ECSteroidsGameState.NONE;
+    }
+
+    void SetGameState(ECSteroidsGameState newState)
+    {
+        Debug.Log("SetGameState requested for " + newState);
+        ECSteroidsGameState currentState = GetGameState();
+        Debug.Log("current state " + currentState);
+        switch (currentState) {
+        case ECSteroidsGameState.Boot:
+            BootState.Exit(this);
+            break;
+        case ECSteroidsGameState.Title:
+            TitleState.Exit(this);
+            break;
+        case ECSteroidsGameState.Credits:
+            CreditsState.Exit(this);
+            break;
+        case ECSteroidsGameState.About:
+            AboutState.Exit(this);
+            break;
+        case ECSteroidsGameState.Backstory:
+            BackStoryState.Exit(this);
+            break;
+        case ECSteroidsGameState.Gameplay:
+            GamePlayState.Exit(this);
+            break;
+        case ECSteroidsGameState.GameOver:
+            GameOverState.Exit(this);
+            break;
+        }
+
+        if (currentState == ECSteroidsGameState.NONE) {
+            GameState gameState = new GameState();
+            gameState.EntityID = NO_ENTITY;
+            cmp_gameStates[NO_ENTITY] = gameState;
+        }
+
+        foreach (GameState gameState in cmp_gameStates.Values) {
+            gameState.currentState = newState;
+        }
+
+        switch (newState) {
+        case ECSteroidsGameState.Boot:
+            BootState.Enter(this);
+            break;
+        case ECSteroidsGameState.Title:
+            TitleState.Enter(this);
+            break;
+        case ECSteroidsGameState.Credits:
+            CreditsState.Enter(this);
+            break;
+        case ECSteroidsGameState.About:
+            AboutState.Enter(this);
+            break;
+        case ECSteroidsGameState.Backstory:
+            BackStoryState.Enter(this);
+            break;
+        case ECSteroidsGameState.Gameplay:
+            GamePlayState.Enter(this);
+            break;
+        case ECSteroidsGameState.GameOver:
+            GameOverState.Enter(this);
+            break;
+        }
+    }
+
+    public void QueueStateChange(ECSteroidsGameState newState, float secondsFromNow)
+    {
+        PendingGameState pend = new PendingGameState();
+        pend.nextState = newState;
+        pend.secondsRemaining = secondsFromNow;
+        pend.EntityID = NO_ENTITY;
+        cmp_pendingGameStates[NO_ENTITY] = pend;
+    }
+
+    public long AddTextMessage(string message, Vector3 pos, float scale, Color color, float width, BaseComponent stateTag)
+    {
+        long eid = GetUnusedEntityID();
+        Debug.Log("adding text message " + message);
+        Debug.Log("text message EID " + eid);
+        TextMessage msg = new TextMessage();
+        msg.EntityID = eid;
+        msg.text = message;
+        msg.pos = pos;
+        msg.scale = scale;
+        msg.color = color;
+        msg.width = width;
+        msg.vectLine = new VectorLine("message " + eid + " " + message, new List<Vector3>(), width);
+        msg.vectLine.MakeText(message, pos, scale);
+        msg.vectLine.color = color;
+        cmp_textMessages[eid] = msg;
+
+        if (stateTag != null) {
+            stateTag.EntityID = eid;
+        }
+        return eid;
+    }
 
     long GetUnusedEntityID()
     {
@@ -51,7 +174,7 @@ public class ECSWorld : MonoBehaviour {
     {
         // todo ungrossify this
 
-        long entityID = long.MinValue;
+        long entityID = NO_ENTITY;
 
         foreach (long ev in cmp_shipTags.Keys) {
             if (ev > entityID) {
@@ -68,6 +191,11 @@ public class ECSWorld : MonoBehaviour {
                 entityID = ev;
             }
         }
+        foreach (long tv in cmp_textMessages.Keys) {
+            if (tv > entityID) {
+                entityID = tv;
+            }
+        }
 
         return entityID;
     }
@@ -77,16 +205,14 @@ public class ECSWorld : MonoBehaviour {
         // TODO make this data driven
         //PreallocateComponentPool(ECSteroids.Transform
 
-        MakeShip();
+        SetGameState(ECSteroidsGameState.Boot);
 
-        int asteroidCount = 3;
+        // TODO move most of this to GamePlayState.Enter
 
-        for (int i = 0; i < asteroidCount; ++i) {
-            MakeInitialAsteroid();
-        }
 
         MakeSingletons();
             
+        // this should go into a gameplay score display component
         List<Vector3> textPoints = new List<Vector3>();
         textPoints.Add(new Vector3(0, 0, 0));
         textPoints.Add(new Vector3(10, 10, 0));
@@ -95,9 +221,9 @@ public class ECSWorld : MonoBehaviour {
         myTextVectorLine.MakeText("Hello, ECS-teroids", new Vector3(0.0f, 20.0f, 0.0f), 1.0f);
 	}
 
-    void MakeShip()
+    public void MakeShip()
     {
-        long firstEntityID = 0;
+        long firstEntityID = GetUnusedEntityID();
 
         ECSteroids.Transform firstTransform = new ECSteroids.Transform();
         firstTransform.pos = Vector2.zero;
@@ -138,6 +264,13 @@ public class ECSWorld : MonoBehaviour {
         playerData.lives = 3;
         playerData.EntityID = firstEntityID;
 
+        TemporaryInvulnerability tmpInv = new TemporaryInvulnerability();
+        tmpInv.EntityID = firstEntityID;
+        tmpInv.secondsRemaining = 3.0f;
+
+        GameplayStateTag gpsTag = new GameplayStateTag();
+        gpsTag.EntityID = firstEntityID;
+
         cmp_transforms[firstEntityID] = firstTransform;
         cmp_polygons[firstEntityID] = firstPolygon;
         cmp_velocitys[firstEntityID] = firstVelocity;
@@ -145,9 +278,11 @@ public class ECSWorld : MonoBehaviour {
         cmp_collisionDisks[firstEntityID] = disk;
         cmp_shipTags[firstEntityID] = tag;
         cmp_playerDatas[firstEntityID] = playerData;
+        cmp_temporaryInvulnerabilitys[firstEntityID] = tmpInv;
+        cmp_gameplayStateTags[firstEntityID] = gpsTag;
     }
 
-    void MakeInitialAsteroid()
+    public void MakeInitialAsteroid()
     {
         float angle = Random.Range(0.0f, Mathf.PI * 2.0f);
         float x = Mathf.Cos(angle);
@@ -213,11 +348,15 @@ public class ECSWorld : MonoBehaviour {
         AsteroidTag asteroidTag = new AsteroidTag();
         asteroidTag.EntityID = entityID;
 
+        GameplayStateTag gpsTag = new GameplayStateTag();
+        gpsTag.EntityID = entityID;
+
         cmp_transforms[entityID] = firstTransform;
         cmp_polygons[entityID] = firstPolygon;
         cmp_velocitys[entityID] = firstVelocity;
         cmp_collisionDisks[entityID] = disk;
         cmp_asteroidTags[entityID] = asteroidTag;
+        cmp_gameplayStateTags[entityID] = gpsTag;
     }
 
     void MakeBullet(Vector3 pos, Vector3 velocity, float lifetime)
@@ -264,17 +403,20 @@ public class ECSWorld : MonoBehaviour {
         entityLifetime.EntityID = entityID;
         entityLifetime.secondsRemaining = lifetime;
 
+        GameplayStateTag gpsTag = new GameplayStateTag();
+        gpsTag.EntityID = entityID;
+
         cmp_transforms[entityID] = firstTransform;
         cmp_polygons[entityID] = firstPolygon;
         cmp_velocitys[entityID] = firstVelocity;
         cmp_collisionDisks[entityID] = disk;
         cmp_bulletTags[entityID] = bulletTag;
         cmp_entityLifetimes[entityID] = entityLifetime;
+        cmp_gameplayStateTags[entityID] = gpsTag;
     }
 
     void MakeSingletons()
     {
-        long NO_ENTITY = -1;
         ECSteroids.InputBuffer inputBuffer = new InputBuffer();
         inputBuffer.Reset();
         inputBuffer.maxCooldown = 0.25f;
@@ -298,6 +440,8 @@ public class ECSWorld : MonoBehaviour {
         PolygonSystemTick();
         LifetimeSystemTick();
         DrawScoreSystemTick();
+        PendingGameStateSystemTick();
+        DrawTextMessages();
 
         DestroyQueuedEntities();
 
@@ -358,9 +502,7 @@ public class ECSWorld : MonoBehaviour {
 
         int curBulletCount = cmp_bulletTags.Count;
 
-        InputBuffer ib = cmp_inputBuffers[-1];
-
-
+        InputBuffer ib = cmp_inputBuffers[NO_ENTITY];
 
         foreach (InputDrivesThisEntityTempTag iTag in cmp_inputTags.Values) {
             long entity = iTag.EntityID;
@@ -425,8 +567,14 @@ public class ECSWorld : MonoBehaviour {
 
     void CollisionDetectionSystemTick()
     {
+        List<KeyValuePair<long, long>> shipCollisions = new List<KeyValuePair<long, long>>();
+
         foreach (ShipTag st in cmp_shipTags.Values) {
             long shipEntity = st.EntityID;
+            if (cmp_temporaryInvulnerabilitys.ContainsKey(shipEntity)) {
+                continue;
+            }
+
             CollisionDisk shipDisk = cmp_collisionDisks[shipEntity];
             ECSteroids.Transform shipTransform = cmp_transforms[shipEntity];
 
@@ -439,12 +587,12 @@ public class ECSWorld : MonoBehaviour {
                 float threshSqr = thresh * thresh;
 
                 if ((asteroidTransform.pos - shipTransform.pos).sqrMagnitude < threshSqr) {
-                    //Debug.Log(System.String.Format("found collision between {0} and {1}", shipEntity, asteroidEntity));
+                    shipCollisions.Add(new KeyValuePair<long, long>(shipEntity, asteroidEntity));
                 }
             }
         }
 
-        List<KeyValuePair<long, long>> collisions = new List<KeyValuePair<long, long>>();
+        List<KeyValuePair<long, long>> bulletCollisions = new List<KeyValuePair<long, long>>();
 
         foreach (BulletTag bt in cmp_bulletTags.Values) {
             long bulletEntity = bt.EntityID;
@@ -460,12 +608,16 @@ public class ECSWorld : MonoBehaviour {
                 float threshSqr = thresh * thresh;
 
                 if ((asteroidTransform.pos - bulletTransform.pos).sqrMagnitude < threshSqr) {
-                    collisions.Add(new KeyValuePair<long, long>(bulletEntity, asteroidEntity));
+                    bulletCollisions.Add(new KeyValuePair<long, long>(bulletEntity, asteroidEntity));
                 }
             }
         }
 
-        foreach (KeyValuePair<long, long> kvp in collisions) {
+        foreach (KeyValuePair<long, long> kvp in shipCollisions) {
+            collideShipWithAsteroid(kvp.Key, kvp.Value);
+        }
+
+        foreach (KeyValuePair<long, long> kvp in bulletCollisions) {
             collideBulletWithAsteroid(kvp.Key, kvp.Value);
         }
     }
@@ -477,6 +629,24 @@ public class ECSWorld : MonoBehaviour {
             pd.score += points;
         }
     }
+
+    void collideShipWithAsteroid(long shipEntity, long asteroidEntity)
+    {
+        FlagEntityForDestruction(asteroidEntity);
+
+        cmp_playerDatas[shipEntity].lives -= 1;
+
+        if (cmp_playerDatas[shipEntity].lives == 0) {
+            QueueStateChange(ECSteroidsGameState.GameOver, 0.0f);
+        }
+        else {
+            TemporaryInvulnerability tmpInv = new TemporaryInvulnerability();
+            tmpInv.EntityID = shipEntity;
+            tmpInv.secondsRemaining = 2.0f;
+            cmp_temporaryInvulnerabilitys[shipEntity] = tmpInv;
+        }
+    }
+
 
     void collideBulletWithAsteroid(long bulletEntity, long asteroidEntity)
     {
@@ -508,8 +678,8 @@ public class ECSWorld : MonoBehaviour {
             MakeAsteroid(at.pos, newRadius1, newVelocity1);
             MakeAsteroid(at.pos, newRadius2, newVelocity2);
         }
-        flagEntityForDestruction(asteroidEntity);
-        flagEntityForDestruction(bulletEntity);
+        FlagEntityForDestruction(asteroidEntity);
+        FlagEntityForDestruction(bulletEntity);
     }
 
     void PolygonSystemTick()
@@ -531,6 +701,33 @@ public class ECSWorld : MonoBehaviour {
             Matrix4x4 tMat = Matrix4x4.TRS(t.pos, Quaternion.AngleAxis(angleDeg, zAxis), identityScale);
             p.vectLine.matrix = tMat;
 
+            if (cmp_temporaryInvulnerabilitys.ContainsKey(p.EntityID)) {
+                TemporaryInvulnerability tmpInv = cmp_temporaryInvulnerabilitys[p.EntityID];
+
+                tmpInv.secondsRemaining -= Time.deltaTime;
+                if (tmpInv.secondsRemaining <= 0) {
+                    cmp_temporaryInvulnerabilitys.Remove(p.EntityID);
+                    p.vectLine.color = p.color;
+                }
+                else {
+                    float baseR = p.color.r;
+                    float baseG = p.color.g;
+                    float baseB = p.color.b;
+
+                    float solidR = 1.0f;
+                    float solidG = 1.0f;
+                    float solidB = 1.0f;
+
+                    float pulse = Mathf.Cos(tmpInv.secondsRemaining * (4.0f * Mathf.PI));
+
+                    float iR = MapRange(pulse, -1.0f, 1.0f, baseR, solidR);
+                    float iG = MapRange(pulse, -1.0f, 1.0f, baseG, solidG);
+                    float iB = MapRange(pulse, -1.0f, 1.0f, baseB, solidB);
+
+                    p.vectLine.color = new Color(iR, iG, iB);
+                }
+            }
+
             p.vectLine.Draw();
         }
     }
@@ -542,7 +739,7 @@ public class ECSWorld : MonoBehaviour {
             //Debug.Log("seconds remaining:" + el.secondsRemaining);
             if (el.secondsRemaining <= 0.0f) {
                 //Debug.Log("flagging");
-                flagEntityForDestruction(el.EntityID);
+                FlagEntityForDestruction(el.EntityID);
             }
         }
     }
@@ -556,7 +753,26 @@ public class ECSWorld : MonoBehaviour {
         }
     }
 
-    void flagEntityForDestruction(long entityID)
+    void PendingGameStateSystemTick()
+    {
+        if (cmp_pendingGameStates.ContainsKey(NO_ENTITY)) {
+            PendingGameState pgs = cmp_pendingGameStates[NO_ENTITY];
+            pgs.secondsRemaining -= Time.deltaTime;
+            if (pgs.secondsRemaining <= 0.0f) {
+                cmp_pendingGameStates.Remove(NO_ENTITY);
+                SetGameState(pgs.nextState);
+            }
+        }
+    }
+
+    void DrawTextMessages()
+    {
+        foreach (TextMessage msg in cmp_textMessages.Values) {
+            msg.vectLine.Draw();
+        }
+    }
+
+    public void FlagEntityForDestruction(long entityID)
     {
         destroyQueue.Add(entityID);
     }
@@ -583,8 +799,19 @@ public class ECSWorld : MonoBehaviour {
             cmp_bulletTags.Remove(entityId);
             cmp_entityLifetimes.Remove(entityId);
             cmp_playerDatas.Remove(entityId);
+            cmp_pendingGameStates.Remove(entityId);
+            if (cmp_textMessages.ContainsKey(entityId)) {
+                VectorLine.Destroy(ref cmp_textMessages[entityId].vectLine);
+                cmp_textMessages.Remove(entityId);
+            }
+            cmp_bootStateTags.Remove(entityId);
+            cmp_titleStateTags.Remove(entityId);
+            cmp_gameplayStateTags.Remove(entityId);
+            cmp_temporaryInvulnerabilitys.Remove(entityId);
 
-            UnusedEntityIDs.Add(entityId);
+            if (entityId != NO_ENTITY) {
+                UnusedEntityIDs.Add(entityId);
+            }
         }
         destroyQueue.Clear();
     }

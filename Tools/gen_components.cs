@@ -384,5 +384,151 @@ namespace ECSteroids {
 
     }
 
+    public class GameState : BaseComponent {
+        public ECSWorld.ECSteroidsGameState currentState;
+
+        public void Populate(ECSWorld.ECSteroidsGameState currentState) {
+            this.currentState = currentState;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class PendingGameState : BaseComponent {
+        public ECSWorld.ECSteroidsGameState nextState;
+        public float secondsRemaining;
+
+        public void Populate(ECSWorld.ECSteroidsGameState nextState, float secondsRemaining) {
+            this.nextState = nextState;
+            this.secondsRemaining = secondsRemaining;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class TextMessage : BaseComponent {
+        public string text;
+        public Vector3 pos;
+        public float scale;
+        public Color color;
+        public float width;
+        public VectorLine vectLine;
+
+        public void Populate(string text, Vector3 pos, float scale, Color color, float width, VectorLine vectLine) {
+            this.text = text;
+            this.pos = pos;
+            this.scale = scale;
+            this.color = color;
+            this.width = width;
+            this.vectLine = vectLine;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class BootStateTag : BaseComponent {
+
+        public void Populate() {
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class TitleStateTag : BaseComponent {
+
+        public void Populate() {
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class GameplayStateTag : BaseComponent {
+
+        public void Populate() {
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class TemporaryInvulnerability : BaseComponent {
+        public float secondsRemaining;
+
+        public void Populate(float secondsRemaining) {
+            this.secondsRemaining = secondsRemaining;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
 }
 

@@ -54,4 +54,25 @@
     <score type="int" />
     <lives type="int" />
   </playerData>
+  <gameState>
+    <currentState type="ECSWorld.ECSteroidsGameState" />
+  </gameState>
+  <pendingGameState>
+    <nextState type="ECSWorld.ECSteroidsGameState" />
+    <secondsRemaining type="float" />
+  </pendingGameState>
+  <textMessage>
+    <text type="string" />
+    <pos type="Vector3" />
+    <scale type="float" />
+    <color type="Color" />
+    <width type="float" />
+    <vectLine type="VectorLine" />
+  </textMessage>
+  <bootStateTag />
+  <titleStateTag />
+  <gameplayStateTag />
+  <temporaryInvulnerability>
+    <secondsRemaining type="float" />
+  </temporaryInvulnerability>
 </components>
