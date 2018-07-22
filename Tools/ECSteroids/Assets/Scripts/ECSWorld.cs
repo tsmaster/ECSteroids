@@ -550,8 +550,8 @@ public class ECSWorld : MonoBehaviour {
     void DrawScoreSystemTick()
     {
         foreach (PlayerData pd in cmp_playerDatas.Values) {
-            string scoreString = string.Format("Score: {0} Ships: {1}", pd.score, pd.lives);
-            myTextVectorLine.MakeText(scoreString, new Vector3(0.0f, 20.0f, 0.0f), 1.0f);
+            string scoreString = string.Format("Score: {0:D8} Ships: {1}", pd.score, pd.lives);
+            myTextVectorLine.MakeText(scoreString, new Vector3(5.0f, 22.0f, 0.0f), 1.0f);
             myTextVectorLine.Draw();
         }
     }

@@ -6,8 +6,6 @@ TODO
     create one
     create pools
     init resources
-- score increment
-- display score
 - text display
   - font
   - char buffer
@@ -21,6 +19,7 @@ TODO
   - gameplay
   - game over
   - pause (?)
+- high score persist
 
 DONE
 - compile components
@@ -41,3 +40,5 @@ DONE
 - spawn new asteroids on bullet/asteroid collision
 - queue for destroyed entities
 - get new entity id
+- score increment
+- display score
