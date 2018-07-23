@@ -53,6 +53,7 @@
   <playerData>
     <score type="int" />
     <lives type="int" />
+    <waveIndex type="int" />
   </playerData>
   <gameState>
     <currentState type="ECSWorld.ECSteroidsGameState" />
@@ -75,4 +76,14 @@
   <temporaryInvulnerability>
     <secondsRemaining type="float" />
   </temporaryInvulnerability>
+  <levelDesc>
+    <index type="int" />
+    <name type="string" />
+    <numAsteroids type="int" />
+    <numStaticCoins type="int" />
+    <timeLimitSeconds type="int" />
+    <numDynamicCoins type="int" />
+    <numSaucersBig type="int" />
+    <numSaucersSmall type="int" />
+  </levelDesc>
 </components>

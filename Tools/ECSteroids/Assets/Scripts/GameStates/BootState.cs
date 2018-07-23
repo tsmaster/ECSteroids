@@ -10,6 +10,7 @@ public class BootState
         BootStateTag tag = new BootStateTag();
         long eid = world.AddTextMessage("BDGOS ][", new Vector3(-3.0f, 22.0f, 0.0f), 1.0f, Color.green, 1.0f, tag);
         world.cmp_bootStateTags[eid] = tag;
+        LevelFactory.MakeLevels(world);
     }
 
     public static void Exit(ECSWorld world)

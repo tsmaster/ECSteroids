@@ -365,10 +365,12 @@ namespace ECSteroids {
     public class PlayerData : BaseComponent {
         public int score;
         public int lives;
+        public int waveIndex;
 
-        public void Populate(int score, int lives) {
+        public void Populate(int score, int lives, int waveIndex) {
             this.score = score;
             this.lives = lives;
+            this.waveIndex = waveIndex;
         }
 
         public override String Serialize() {
@@ -515,6 +517,40 @@ namespace ECSteroids {
 
         public void Populate(float secondsRemaining) {
             this.secondsRemaining = secondsRemaining;
+        }
+
+        public override String Serialize() {
+            return "";
+        }
+
+        public override bool Deserialize(String s) {
+            return false;
+        }
+
+        public override void Reset() {
+        }
+
+    }
+
+    public class LevelDesc : BaseComponent {
+        public int index;
+        public string name;
+        public int numAsteroids;
+        public int numStaticCoins;
+        public int timeLimitSeconds;
+        public int numDynamicCoins;
+        public int numSaucersBig;
+        public int numSaucersSmall;
+
+        public void Populate(int index, string name, int numAsteroids, int numStaticCoins, int timeLimitSeconds, int numDynamicCoins, int numSaucersBig, int numSaucersSmall) {
+            this.index = index;
+            this.name = name;
+            this.numAsteroids = numAsteroids;
+            this.numStaticCoins = numStaticCoins;
+            this.timeLimitSeconds = timeLimitSeconds;
+            this.numDynamicCoins = numDynamicCoins;
+            this.numSaucersBig = numSaucersBig;
+            this.numSaucersSmall = numSaucersSmall;
         }
 
         public override String Serialize() {

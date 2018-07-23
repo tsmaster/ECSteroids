@@ -12,7 +12,7 @@ using ECSteroids;
 /// This is the Unity top level behavior that holds everything, runs our systems.
 /// </summary>
 public class ECSWorld : MonoBehaviour {
-    public long NO_ENTITY = -1;
+    public const long NO_ENTITY = -1;
 
     public enum ECSteroidsGameState {
         NONE,
@@ -46,6 +46,7 @@ public class ECSWorld : MonoBehaviour {
     public Dictionary<long, ECSteroids.TitleStateTag> cmp_titleStateTags = new Dictionary<long, TitleStateTag>();
     public Dictionary<long, ECSteroids.GameplayStateTag> cmp_gameplayStateTags = new Dictionary<long, GameplayStateTag>();
     Dictionary<long, ECSteroids.TemporaryInvulnerability> cmp_temporaryInvulnerabilitys = new Dictionary<long, TemporaryInvulnerability>();
+    public Dictionary<long, ECSteroids.LevelDesc> cmp_levelDescs = new Dictionary<long, LevelDesc>();
     // also add to destroy
 
     List<long> UnusedEntityIDs = new List<long>();
@@ -159,7 +160,18 @@ public class ECSWorld : MonoBehaviour {
         return eid;
     }
 
-    long GetUnusedEntityID()
+    bool isWaveComplete()
+    {
+        foreach (AsteroidTag t in cmp_asteroidTags.Values) {
+            return false;
+        }
+
+        // TODO include other objects, like flying saucers, coins
+
+        return true;
+    }
+
+    public long GetUnusedEntityID()
     {
         if (UnusedEntityIDs.Count > 0) {
             long val = UnusedEntityIDs[0];
@@ -194,6 +206,11 @@ public class ECSWorld : MonoBehaviour {
         foreach (long tv in cmp_textMessages.Keys) {
             if (tv > entityID) {
                 entityID = tv;
+            }
+        }
+        foreach (long ev in cmp_levelDescs.Keys) {
+            if (ev > entityID) {
+                entityID = ev;
             }
         }
 
@@ -259,9 +276,11 @@ public class ECSWorld : MonoBehaviour {
         ShipTag tag = new ShipTag();
         tag.EntityID = firstEntityID;
 
+        // TODO this belongs outside the ship
         PlayerData playerData = new PlayerData();
         playerData.score = 0;
         playerData.lives = 3;
+        playerData.waveIndex = 1;
         playerData.EntityID = firstEntityID;
 
         TemporaryInvulnerability tmpInv = new TemporaryInvulnerability();
@@ -280,6 +299,32 @@ public class ECSWorld : MonoBehaviour {
         cmp_playerDatas[firstEntityID] = playerData;
         cmp_temporaryInvulnerabilitys[firstEntityID] = tmpInv;
         cmp_gameplayStateTags[firstEntityID] = gpsTag;
+    }
+
+    public void PopulateForWave()
+    {
+        int asteroidCount = 0;
+        int waveIndex = -1;
+
+        foreach (PlayerData pd in cmp_playerDatas.Values) {
+            waveIndex = pd.waveIndex;
+            break;
+        }
+
+        if (waveIndex == -1) {
+            return;
+        }
+
+        Debug.Log("wave index: "+ waveIndex);
+        long eid = LevelFactory.GetLevelDescByWaveIndex(this, waveIndex);
+        Debug.Log("level desc id: " + eid);
+
+        LevelDesc ld = cmp_levelDescs[eid];
+        asteroidCount = ld.numAsteroids;
+
+        for (int i = 0; i < asteroidCount; ++i) {
+            MakeInitialAsteroid();
+        }
     }
 
     public void MakeInitialAsteroid()
@@ -442,6 +487,7 @@ public class ECSWorld : MonoBehaviour {
         DrawScoreSystemTick();
         PendingGameStateSystemTick();
         DrawTextMessages();
+        WaveSystemTick();
 
         DestroyQueuedEntities();
 
@@ -640,13 +686,17 @@ public class ECSWorld : MonoBehaviour {
             QueueStateChange(ECSteroidsGameState.GameOver, 0.0f);
         }
         else {
-            TemporaryInvulnerability tmpInv = new TemporaryInvulnerability();
-            tmpInv.EntityID = shipEntity;
-            tmpInv.secondsRemaining = 2.0f;
-            cmp_temporaryInvulnerabilitys[shipEntity] = tmpInv;
+            addInvulnerabilityToShip(shipEntity, 2.0f);
         }
     }
 
+    void addInvulnerabilityToShip(long shipIndex, float duration)
+    {
+        TemporaryInvulnerability tmpInv = new TemporaryInvulnerability();
+        tmpInv.EntityID = shipIndex;
+        tmpInv.secondsRemaining = duration;
+        cmp_temporaryInvulnerabilitys[shipIndex] = tmpInv;
+    }
 
     void collideBulletWithAsteroid(long bulletEntity, long asteroidEntity)
     {
@@ -772,6 +822,22 @@ public class ECSWorld : MonoBehaviour {
         }
     }
 
+    void WaveSystemTick()
+    {
+        if (isWaveComplete()) {
+            foreach (PlayerData pd in cmp_playerDatas.Values) {
+                pd.waveIndex++;
+            }
+
+            foreach (ShipTag st in cmp_shipTags.Values) {
+                addInvulnerabilityToShip(st.EntityID, 2.0f);
+            }
+
+            // TODO write the wave name
+            PopulateForWave();
+        }
+    }
+
     public void FlagEntityForDestruction(long entityID)
     {
         destroyQueue.Add(entityID);
@@ -808,6 +874,7 @@ public class ECSWorld : MonoBehaviour {
             cmp_titleStateTags.Remove(entityId);
             cmp_gameplayStateTags.Remove(entityId);
             cmp_temporaryInvulnerabilitys.Remove(entityId);
+            cmp_levelDescs.Remove(entityId);
 
             if (entityId != NO_ENTITY) {
                 UnusedEntityIDs.Add(entityId);

@@ -63,6 +63,7 @@
      <Compile Include="Assets\Scripts\GameStates\GamePlayState.cs" />
      <Compile Include="Assets\Scripts\GameStates\TitleState.cs" />
      <Compile Include="Assets\Scripts\Generated\gen_components.cs" />
+     <Compile Include="Assets\Scripts\Generated\gen_levels.cs" />
      <Compile Include="Assets\Scripts\Systems\BDGECSBaseSystem.cs" />
      <Compile Include="Assets\Scripts\Systems\InputSystem.cs" />
      <Compile Include="Assets\Scripts\VectrosityPolygon.cs" />

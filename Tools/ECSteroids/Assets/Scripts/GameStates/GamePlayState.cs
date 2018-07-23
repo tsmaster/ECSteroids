@@ -10,11 +10,7 @@ public class GamePlayState
 
         world.MakeShip();
 
-        int asteroidCount = 3;
-
-        for (int i = 0; i < asteroidCount; ++i) {
-            world.MakeInitialAsteroid();
-        }
+        world.PopulateForWave();
     }
 
     public static void Exit(ECSWorld world)
