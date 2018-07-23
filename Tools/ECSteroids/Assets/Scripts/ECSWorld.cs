@@ -325,6 +325,12 @@ public class ECSWorld : MonoBehaviour {
         for (int i = 0; i < asteroidCount; ++i) {
             MakeInitialAsteroid();
         }
+
+        long msgid = AddTextMessage(ld.name, Vector3.zero, 1.0f, Color.green, 1.0f, null);
+        EntityLifetime elt = new EntityLifetime();
+        elt.EntityID = msgid;
+        elt.secondsRemaining = 2.0f;
+        cmp_entityLifetimes[msgid] = elt;
     }
 
     public void MakeInitialAsteroid()

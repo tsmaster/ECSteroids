@@ -20,13 +20,15 @@ namespace ECSteroids {
             makeLevelDesc(world, 2, "Wave 2", 4, 0, 0, 0, 0, 0);
             makeLevelDesc(world, 3, "Wave 3", 5, 0, 0, 0, 1, 0);
             makeLevelDesc(world, 4, "Wave 4", 6, 0, 0, 0, 0, 1);
-            makeLevelDesc(world, 5, "BONUS 1", 0, 8, 180, 0, 0, 0);
+            //makeLevelDesc(world, 5, "BONUS 1", 0, 8, 180, 0, 0, 0);
+            makeLevelDesc(world, 5, "BONUS 1", 1, 8, 180, 0, 0, 0);
             makeLevelDesc(world, 6, "Wave 5", 5, 0, 0, 0, 1, 0);
             makeLevelDesc(world, 7, "Wave 6", 6, 0, 0, 0, 0, 1);
             makeLevelDesc(world, 8, "Wave 7", 7, 0, 0, 0, 8, 1);
             makeLevelDesc(world, 9, "Wave 8", 8, 0, 0, 0, 4, 1);
             makeLevelDesc(world, 10, "Wave 9", 9, 0, 0, 0, 2, 1);
-            makeLevelDesc(world, 11, "BONUS 2", 0, 16, 120, 0, 0, 0);
+            //makeLevelDesc(world, 11, "BONUS 2", 0, 16, 120, 0, 0, 0);
+            makeLevelDesc(world, 11, "BONUS 2", 1, 16, 120, 0, 0, 0);
             makeLevelDesc(world, 12, "Wave 10", 8, 0, 0, 0, 1, 1);
             makeLevelDesc(world, 13, "Wave 11", 9, 0, 0, 0, 1, 1);
             makeLevelDesc(world, 14, "Wave 12", 10, 0, 0, 0, 1, 2);
